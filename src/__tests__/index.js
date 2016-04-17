@@ -210,6 +210,14 @@ let tests = [{
     fixture: 'h2{color:red;margin-bottom:20px}h1{color:red;margin:10px;margin-bottom:20px}',
     expected: 'h2{margin-bottom:20px}h2,h1{color:red}h1{margin:10px;margin-bottom:20px}'
 }, {
+    message: 'should not incorrectly extract margin properties (3)' ,
+    fixture: 'h2{margin:0;margin-bottom:20px}h1{margin:0;margin-top:20px}',
+    expected: 'h2{margin:0;margin-bottom:20px}h1{margin:0;margin-top:20px}'
+}, {
+    message: 'should not incorrectly extract margin properties (4)' ,
+    fixture: 'h2{margin:0}h1{margin-top:20px;margin:0}',
+    expected: 'h2{margin:0}h1{margin-top:20px;margin:0}'
+}, {
     message: 'should not incorrectly extract display properties',
     fixture: '.box1{display:inline-block;display:block}.box2{display:inline-block}',
     expected: '.box1{display:inline-block;display:block}.box2{display:inline-block}'
@@ -249,6 +257,30 @@ let tests = [{
     message: 'should not merge across font face rules (2)',
     fixture: '.foo { font-weight: normal; } .bar { font-family: "my-font"; font-weight: normal; } @font-face { font-family: "my-font"; font-weight: normal; src: url("my-font.ttf"); }',
     expected: '.foo,.bar { font-weight: normal; } .bar { font-family: "my-font"; } @font-face { font-family: "my-font"; font-weight: normal; src: url("my-font.ttf"); }'
+}, {
+    message: 'should not merge conflicting rules',
+    fixture: '.a{font-family:Arial;font-family:Helvetica;}.b{font-family:Arial;}',
+    expected: '.a{font-family:Arial;font-family:Helvetica;}.b{font-family:Arial;}'
+}, {
+    message: 'should merge properties with vendor prefixes',
+    fixture: '.a{-webkit-transform: translateX(-50%) translateY(-50%) rotate(-90deg);-webkit-overflow-scrolling: touch}.b{-webkit-transform: translateX(-50%) translateY(-50%) rotate(-90deg);}',
+    expected: '.a{-webkit-overflow-scrolling: touch}.a,.b{-webkit-transform: translateX(-50%) translateY(-50%) rotate(-90deg);}'
+}, {
+    message: 'should respect property order and do nothing',
+    fixture: 'body { overflow: hidden; overflow-y: scroll; overflow-x: hidden;} main { overflow: hidden }',
+    expected: 'body { overflow: hidden; overflow-y: scroll; overflow-x: hidden;} main { overflow: hidden }'
+}, {
+    message: 'should respect property order and do nothing (2)',
+    fixture: '.a{ border-color:transparent; border-bottom-color:#111111; border-bottom-style:solid; }.b{ border-color:transparent; border-bottom-color:#222222; border-bottom-style:solid; }',
+    expected: '.a{ border-color:transparent; border-bottom-color:#111111; border-bottom-style:solid; }.b{ border-color:transparent; border-bottom-color:#222222; border-bottom-style:solid; }'
+}, {
+    message: 'should respect property order and do nothing (3)',
+    fixture: '.fb-col-md-6 { color: red; border-color:blue; flex: 0 0 auto; flex-basis: 50%; } .fb-col-md-7 { color: red; border-color:blue; flex: 0 0 auto; flex-basis: 58.3%; }',
+    expected: '.fb-col-md-6 { flex: 0 0 auto; flex-basis: 50%; } .fb-col-md-6,.fb-col-md-7 { color: red; border-color:blue; } .fb-col-md-7 { flex: 0 0 auto; flex-basis: 58.3%; }'
+}, {
+    message: 'should respect property order and do nothing (4) (cssnano#160)',
+    fixture: 'one { border: 1px solid black; border-top: none; } two { border: 1px solid black; }',
+    expected: 'one { border: 1px solid black; border-top: none; } two { border: 1px solid black; }'
 }];
 
 function process (css, options) {

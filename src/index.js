@@ -50,6 +50,32 @@ function ruleLength (...rules) {
     return rules.map(r => r.nodes.length ? String(r) : '').join('').length;
 }
 
+function splitProp (prop) {
+    let parts = prop.split('-');
+    let base, rest;
+    if (prop[0] === '-') {
+        base = parts[1] + parts[2];
+        rest = parts.slice(3);
+    } else {
+        base = parts[0];
+        rest = parts.slice(1);
+    }
+    return [base, rest];
+}
+
+function isConflictingProp (propA, propB) {
+    if (propA === propB) {
+        return true;
+    }
+    let a = splitProp(propA);
+    let b = splitProp(propB);
+    return a[0] === b[0] && a[1].length !== b[1].length;
+}
+
+function hasConflicts (declProp, notMoved) {
+    return notMoved.some(prop => isConflictingProp(prop, declProp));
+}
+
 function partialMerge (first, second) {
     let intersection = intersect(getDecls(first), getDecls(second));
     if (!intersection.length) {
@@ -67,14 +93,28 @@ function partialMerge (first, second) {
     recievingBlock.nodes = [];
     second.parent.insertBefore(second, recievingBlock);
     let difference = different(getDecls(first), getDecls(second));
+    let filterConflicts = (decls, intersection) => {
+        let willNotMove = [];
+        return decls.reduce((willMove, decl) => {
+            let intersects = ~intersection.indexOf(decl);
+            let prop = decl.split(':')[0];
+            let base = prop.split('-')[0];
+            let canMove = difference.every(d => d.split(':')[0] !== base);
+            if (intersects && canMove && !hasConflicts(prop, willNotMove)) {
+                willMove.push(decl);
+            } else {
+                willNotMove.push(prop);
+            }
+            return willMove;
+        }, []);
+    };
+    intersection = filterConflicts(getDecls(first).reverse(), intersection);
+    intersection = filterConflicts((getDecls(second)), intersection);
     let firstClone = clone(first);
     let secondClone = clone(second);
     let moveDecl = callback => {
         return decl => {
-            let intersects = ~intersection.indexOf(String(decl));
-            let base = decl.prop.split('-')[0];
-            let canMove = difference.every(d => d.split(':')[0] !== base);
-            if (intersects && canMove) {
+            if (~intersection.indexOf(String(decl))) {
                 callback.call(this, decl);
             }
         };
