@@ -158,8 +158,11 @@ function partialMerge (first, second) {
     }
 }
 
-function selectorMerger (browsers, compatibilityCache) {
+function selectorMerger (browsers, compatibilityCache, prule) {
     let cache = null;
+    if(prule) {
+        cache = prule;
+    }
     return function (rule) {
         // Prime the cache with the first rule, or alternately ensure that it is
         // safe to merge both declarations before continuing
@@ -209,6 +212,9 @@ export default postcss.plugin('postcss-merge-rules', () => {
             env: opts && opts.env,
         });
         const compatibilityCache = {};
-        css.walkRules(selectorMerger(browsers, compatibilityCache));
+        css.walkRules(function(rule){
+          var prule = rule;
+          css.walkRules(selectorMerger(browsers, compatibilityCache,prule))
+        })
     };
 });
