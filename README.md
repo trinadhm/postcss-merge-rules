@@ -99,6 +99,10 @@ examples for your environment.
 Pull requests are welcome. If you add functionality, then please add unit tests
 to cover it.
 
+### Note
+
+Added recursion, need to check performance implications
+
 ## License
 
 MIT © [Ben Briggs](http://beneb.info)
